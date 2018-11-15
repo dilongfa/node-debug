@@ -1,0 +1,36 @@
+{
+  "name": "@dilongfa/debug",
+  "version": "1.0.0",
+  "description": "A simple debugging utility for Node.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dilongfa/node-debug.git"
+  },
+  "keywords": [
+    "console",
+    "debug",
+    "print",
+    "echo",
+    "log",
+    "node-print",
+    "pretty-print",
+    "print-console",
+    "node-debug",
+    "nodejs-debug",
+    "debugjs"
+  ],
+  "author": "DiLong Fa <dilongfa@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dilongfa/node-debug/issues"
+  },
+  "homepage": "https://github.com/dilongfa/node-debug#readme",
+  "devDependencies": {}
+}
