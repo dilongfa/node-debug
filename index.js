@@ -51,8 +51,7 @@ function start(ns = '') {
     }
 }
 
-function Debug(namespace, showDifftime = true) {
-    this.showDifftime = showDifftime
+function Debug(namespace) {
     this.namespace = namespace
     this.color = getColor()
     this.previous = null
@@ -64,6 +63,7 @@ function Debug(namespace, showDifftime = true) {
 Debug.prototype.debug = function(...args) {
    if (!this.enabled || args.length === 0) return
     
+    const c = this.color
     const now = Date.now()
     const duration = now - (this.previous || now)
     this.previous = now 
@@ -86,11 +86,10 @@ Debug.prototype.debug = function(...args) {
         }
     }
 
-    const prefix = `\u001b[3${this.color};1m${this.namespace}\u001b[0m`
-    let str = `  ${prefix} ` + format(...args).split('\n').join('\n  ' + prefix)
-    if (this.showDifftime) {
-        str += ` \u001b[3${this.color}m+` + ms(duration) + `\u001b[0m`
-    }
+    const prefix = `\u001b[3${c};1m${this.namespace} \u001b[0m`
+    let str = `  ${prefix}`
+        str += format(...args).split('\n').join('\n  ' + prefix)
+        str += ` \u001b[3${c}m+` + ms(duration) + `\u001b[0m`
 
     // Output
     process.stderr.write(str + '\n')
