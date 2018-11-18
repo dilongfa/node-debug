@@ -1,5 +1,5 @@
 # debug
-A simple debugging utility for Node.js
+A tiny debugging utility with no packages dependencies for Node.js
 
 ### Installation
 ```
