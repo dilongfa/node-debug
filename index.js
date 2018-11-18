@@ -1,10 +1,11 @@
 'use strict'
 
-const util = require('util')
+const { inspect, format } = require('util')
+
 const allows = []
 const ignores = []
 const colors = [2, 3, 4, 5, 6]
-let counter = 0
+let instanceCounter = 0
 
 function ms(ms) {
     if (ms >= 86400000) return Math.round(ms / 86400000) + 'd'
@@ -14,27 +15,10 @@ function ms(ms) {
     return ms + 'ms'
 }
 
-function fillColor(str, c = 0) {
-    return '\u001b[3' + c + ';1m' + str + '\u001b[0m'
-}
-
 function getColor() {
-    let c = (counter % colors.length)
-    counter++
+    const c = (instanceCounter % colors.length)
+    instanceCounter++
     return (c === 0) ? 2 : 2+c
-}
-
-function formatError(e) {
-    return e.stack.split('\n').map((str, i) => {
-        if (i == 0) return e.message
-        if (i == 1) return fillColor(str.replace('at', '@'), 0).replace(/\((.*)\)/,  fillColor('($1)', 1)) 
-        return fillColor(str.replace('at', '@'), 0)
-    }).join('\n')
-}
-
-const formatters = {
-    o: (v) => util.inspect(v, {colors: true}).replace(/\s*\n\s*/g, ' '), //.split('\n').map(str => str.trim()).join('  '),
-    O: (v) => (v instanceof Error) ? formatError(v) : util.inspect(v, {colors: true})
 }
 
 function getState(ns) {
@@ -53,10 +37,9 @@ function getState(ns) {
     return false
 }
 
-function load(ns) {
-    if (!ns) ns = process.env.DEBUG
-
-    let ary = (typeof ns === 'string' ? ns : '').split(/[\s,]+/)
+function start(ns = '') {
+    if (ns === '') ns = process.env.DEBUG
+    const ary = ns.split(/[\s,]+/)
     for (let elm of ary) { 
         if (!elm) continue
         ns = elm.replace(/\*/g, '.*?')
@@ -68,50 +51,51 @@ function load(ns) {
     }
 }
 
-function Debug(namespace) {
-    this._namespace = namespace
-    this._color = getColor()
-    this._previous = null
-    this._enabled = getState(namespace)
+function Debug(namespace, showDifftime = true) {
+    this.showDifftime = showDifftime
+    this.namespace = namespace
+    this.color = getColor()
+    this.previous = null
+    this.enabled = getState(namespace)
+
     return this.debug.bind(this)
 }
 
 Debug.prototype.debug = function(...args) {
-   if (!this._enabled || args.length === 0) return
-
+   if (!this.enabled || args.length === 0) return
+    
     const now = Date.now()
-    const duration = now - (this._previous || now)
-    this._previous = now
+    const duration = now - (this.previous || now)
+    this.previous = now 
 
     // Parse and reformat messages
     if (typeof args[0] !== 'string') {
-        args.unshift('%O')
-    } else if (args[1] instanceof Error && args[0].indexOf('%O') == -1) {
-        args[0] = args[0].trim() + ' %O'
+        args.unshift('%s')
+    } else {
+        args[0] = args[0].replace(/%([oO])/g, '%s')
     }
 
-    let idx = 0
-    args[0] = args[0].replace(/%([a-zA-Z%])/g, (match, flag) => {
-        if (match === '%%') return match
-        idx++
-        if (typeof formatters[flag] == 'function' && args[idx]) {
-            match = formatters[flag](args[idx])
-            args.splice(idx, 1)
-            idx--
+    for(let i = 1; i < args.length; i++) {
+        switch(typeof args[i]) {
+            case 'function':
+                args[i] = args[i].toString()
+                break
+                case 'object':
+                args[i] = (args[i] instanceof Error) ? args[i].stack.replace(/   at /g, '@ ') : inspect(args[i], false, null, true)
+            break
         }
-        return match 
-    })
+    }
 
-    const prefix = fillColor(this._namespace, this._color)
-    const suffix = '\u001b[3' + this._color + 'm' + '+' + ms(duration) + '\u001b[0m'
-
-    args[0] = '  ' + prefix + ' ' +args[0].split('\n').join('\n  ' + prefix)
-    args.push(suffix)
+    const prefix = `\u001b[3${this.color};1m${this.namespace}\u001b[0m`
+    let str = `  ${prefix} ` + format(...args).split('\n').join('\n  ' + prefix)
+    if (this.showDifftime) {
+        str += ` \u001b[3${this.color}m+` + ms(duration) + `\u001b[0m`
+    }
 
     // Output
-    process.stdout.write(util.format(...args) + '\n');
+    process.stderr.write(str + '\n')
 }
 
-load()
+start()
 
 module.exports = (namespace) => new Debug(namespace)
