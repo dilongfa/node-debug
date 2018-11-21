@@ -39,8 +39,6 @@ function getState(ns) {
 }
 
 function start(ns = '') {
-    if (ns === '') ns = process.env.DEBUG
-
     const ary = ns.split(/[\s,]+/)
     for (let elm of ary) { 
         if (!elm) continue
@@ -53,7 +51,7 @@ function start(ns = '') {
     }
 }
 
-start()
+start(process.env.DEBUG)
 
 module.exports = exports = (namespace, color) => {
     let previous
